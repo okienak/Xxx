@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OKIENAK | Catatan Secure</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------- */
+/* CSS Optimal (Font Menyatu, Warna Ungu, Desain Halus) */
+/* ---------------------------------------------------- */
+:root {
+    --primary-color: #7A00FF; 
+    --primary-light: #F0E6FF; 
+    --background-color: #F5F7FA;
+    --text-color: #333;
+    --error-color: #FF4D4F;
+    --success-color: #28a745;
+    --shadow-color: rgba(0, 0, 0, 0.08); 
+}
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Poppins', sans-serif; 
+}
+html, body { 
+    min-height: 100%; 
+    background: var(--background-color); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    padding: 20px 0;
+}
+.container { 
+    width: 95%; 
+    max-width: 500px; 
+    background: #fff; 
+    border-radius: 16px; 
+    padding: 2rem; 
+    box-shadow: 0 8px 30px var(--shadow-color); 
+    margin-bottom: 20px;
+}
+h1 { 
+    text-align: center; 
+    color: var(--primary-color); 
+    margin-bottom: 1.5rem; 
+    font-weight: 700; 
+}
+input, textarea, button, .tab button { 
+    width: 100%; 
+    border-radius: 10px; 
+    border: 1px solid #e0e0e0;
+    padding: 0.8rem; 
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 500; 
+    transition: all 0.2s ease;
+}
+input:focus, textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+button { 
+    background: var(--primary-color); 
+    color: #fff; 
+    cursor: pointer; 
+    border: none;
+    font-weight: 600; 
+}
+button:hover { 
+    filter: brightness(1.1); 
+    transform: translateY(-1px);
+}
+.tab { 
+    display: flex; 
+    margin-bottom: 1.5rem; 
+    border-radius: 12px;
+    background: var(--primary-light);
+    padding: 5px;
+}
+.tab button { 
+    flex: 1; 
+    margin: 0;
+    background: transparent;
+    color: var(--primary-color);
+    border: none;
+    padding: 0.7rem;
+    border-radius: 8px;
+    font-weight: 600;
+}
+.active-tab { 
+    background: var(--primary-color) !important; 
+    color: #fff !important; 
+    font-weight: 700 !important;
+}
+.hidden { 
+    display: none !important; 
+}
+.note-card { 
+    background: var(--primary-light); 
+    border-radius: 10px; 
+    padding: 1rem; 
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.note-card p {
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+    margin-bottom: 0.75rem;
+}
+.note-card.editing textarea {
+    min-height: 80px;
+    margin-bottom: 0.5rem;
+    border-color: var(--primary-color);
+}
+.note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.note-actions button, .note-actions a {
+    width: auto;
+    padding: 0.5rem 0.9rem;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+.btn-delete { background: var(--error-color); }
+.btn-delete:hover { background: #c93030; }
+.btn-edit { background: #3498db; }
+.btn-edit:hover { background: #2980b9; }
+.btn-save { background: var(--success-color); }
+.btn-save:hover { background: #1f8737; }
+.btn-cancel { background: #bdc3c7; color: #333; }
+.btn-cancel:hover { background: #a5acb0; }
+a { 
+    color: var(--primary-color); 
+    text-decoration: none;
+    font-weight: 500;
+}
+footer {
+    text-align: center;
+    color: #888;
+    margin-top: 30px;
+    font-size: 0.9rem;
+}
+/* Toast Notification */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+.toast {
+    background: #333;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transform: translateY(20px);
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+.toast.success { background: var(--success-color); }
+.toast.error { background: var(--error-color); }
+.toast.info { background: var(--primary-color); }
+</style>
+</head>
+<body>
+
+<div class="container" id="auth-container">
+    <h1>🔑 OKIENAK</h1>
+    <div class="tab">
+        <button id="login-tab" class="active-tab">Masuk</button>
+        <button id="register-tab">Daftar</button>
+    </div>
+    <div id="login-form">
+        <input id="login-email" type="text" placeholder="Email">
+        <input id="login-password" type="password" placeholder="Password">
+        <button id="login-btn">Masuk</button>
+    </div>
+    <div id="register-form" class="hidden">
+        <input id="reg-email" type="text" placeholder="Email">
+        <input id="reg-password" type="password" placeholder="Password (Min. 3 karakter)">
+        <input id="reg-confirm-password" type="password" placeholder="Konfirmasi Password">
+        <button id="register-btn">Daftar Akun</button>
+    </div>
+</div>
+
+<div class="container hidden" id="note-container">
+    <h1>📝 Catatan Saya</h1>
+    <p style="font-size:1.1rem; margin-bottom:1rem; font-weight: 500;">
+        Halo, <strong id="user-name" style="color:var(--primary-color); font-weight: 700;"></strong>
+    </p>
+    
+    <textarea id="note-input" placeholder="Tulis catatan baru di sini..."></textarea>
+    <input id="note-password-input" type="password" placeholder="Password Opsional (untuk Share URL)">
+    <button id="add-note-btn">Tambah Catatan</button>
+    
+    <div id="notes-list" style="margin-top: 1rem;"></div>
+    
+    <button id="logout-btn" class="btn-delete" style="margin-top: 1rem;">Keluar</button>
+</div>
+
+<footer>
+    © 2024 OKIENAK | Kontak: <a href="mailto:cidmomo19@gmail.com">cidmomo19@gmail.com</a>
+</footer>
+
+<div id="toast-container"></div>
+
+<script>
+// Deklarasi Variabel DOM
+const D = {
+    authContainer: document.getElementById("auth-container"),
+    noteContainer: document.getElementById("note-container"),
+    loginTab: document.getElementById("login-tab"),
+    registerTab: document.getElementById("register-tab"),
+    loginEmail: document.getElementById("login-email"),
+    loginPassword: document.getElementById("login-password"),
+    loginBtn: document.getElementById("login-btn"),
+    regEmail: document.getElementById("reg-email"),
+    regPassword: document.getElementById("reg-password"),
+    regConfirmPassword: document.getElementById("reg-confirm-password"), // NEW
+    registerBtn: document.getElementById("register-btn"),
+    userName: document.getElementById("user-name"),
+    noteInput: document.getElementById("note-input"),
+    notePasswordInput: document.getElementById("note-password-input"), // NEW
+    addNoteBtn: document.getElementById("add-note-btn"),
+    notesList: document.getElementById("notes-list"),
+    logoutBtn: document.getElementById("logout-btn"),
+    loginForm: document.getElementById("login-form"),
+    registerForm: document.getElementById("register-form"),
+    toastContainer: document.getElementById("toast-container")
+};
+
+// Helper Functions
+const getUsers = () => JSON.parse(localStorage.getItem("users") || "{}");
+const saveUsers = (users) => localStorage.setItem("users", JSON.stringify(users));
+const getLoggedInUserEmail = () => localStorage.getItem("loggedIn");
+
+// ==== TOAST NOTIFICATION ====
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    
+    D.toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10); 
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        }, { once: true });
+    }, 4000); 
+}
+
+// ==== Tab Switching ====
+D.loginTab.addEventListener("click",()=>{
+    D.loginTab.classList.add("active-tab");
+    D.registerTab.classList.remove("active-tab");
+    D.loginForm.classList.remove("hidden");
+    D.registerForm.classList.add("hidden");
+});
+D.registerTab.addEventListener("click",()=>{
+    D.registerTab.classList.add("active-tab");
+    D.loginTab.classList.remove("active-tab");
+    D.registerForm.classList.remove("hidden");
+    D.loginForm.classList.add("hidden");
+});
+
+// ==== REGISTER (Improved with Password Confirmation) ====
+D.registerBtn.addEventListener("click",()=>{
+    const email = D.regEmail.value.trim();
+    const pass = D.regPassword.value.trim();
+    const confirmPass = D.regConfirmPassword.value.trim();
+    
+    if(!email || !pass || !confirmPass) return showToast("Isi semua kolom pendaftaran!", 'error');
+    if(pass.length < 3) return showToast("Password minimal 3 karakter!", 'error');
+    if(pass !== confirmPass) return showToast("Konfirmasi password tidak cocok!", 'error');
+    
+    let users = getUsers();
+    if(users[email]) return showToast("Email sudah terdaftar!", 'error');
+    
+    users[email] = {password:pass, notes:[]}; 
+    saveUsers(users);
+
+    showToast("Daftar berhasil! Silakan masuk.", 'success');
+    D.regEmail.value=""; D.regPassword.value=""; D.regConfirmPassword.value="";
+    D.loginTab.click();
+});
+
+// ==== LOGIN ====
+D.loginBtn.addEventListener("click",()=>{
+    const email = D.loginEmail.value.trim();
+    const pass = D.loginPassword.value.trim();
+    let users = getUsers();
+    
+    if(users[email] && users[email].password===pass){
+        localStorage.setItem("loggedIn", email);
+        showNotesPage(email);
+        D.loginEmail.value=""; D.loginPassword.value="";
+        showToast(`Selamat datang, ${email.split('@')[0]}!`, 'success');
+    } else {
+        showToast("Email atau password salah!", 'error');
+    }
+});
+
+// ==== LOGOUT ====
+D.logoutBtn.addEventListener("click",()=>{
+    if(confirm("Anda yakin ingin keluar?")){
+        localStorage.removeItem("loggedIn");
+        location.reload();
+    }
+});
+
+// ==== SHOW NOTES PAGE ====
+function showNotesPage(email){
+    D.authContainer.classList.add("hidden");
+    D.noteContainer.classList.remove("hidden");
+    D.userName.textContent = email.split('@')[0]; 
+    renderNotes();
+}
+
+// ==== ADD NOTE (New Note Object with Password) ====
+D.addNoteBtn.addEventListener("click",()=>{
+    const text = D.noteInput.value.trim();
+    const notePass = D.notePasswordInput.value.trim();
+    
+    if(!text) return showToast("Tulis catatan dulu!", 'error');
+    
+    const email = getLoggedInUserEmail();
+    let users = getUsers();
+    
+    const newNote = {
+        content: text,
+        password: notePass || null // Simpan null jika tidak ada password
+    };
+
+    users[email].notes.unshift(newNote);
+    saveUsers(users);
+    
+    D.noteInput.value="";
+    D.notePasswordInput.value="";
+    renderNotes();
+    showToast("Catatan berhasil ditambahkan!", 'success');
+});
+
+// ==== DELETE NOTE ====
+function deleteNote(index){
+    if(!confirm("Anda yakin ingin menghapus catatan ini?")) return;
+    const email = getLoggedInUserEmail();
+    let users = getUsers();
+    users[email].notes.splice(index, 1); 
+    saveUsers(users);
+    renderNotes();
+    showToast("Catatan berhasil dihapus.", 'info');
+}
+
+// ==== UPDATE NOTE (Fitur Bermanfaat) ====
+function updateNote(index, newText, newPass){
+    const email = getLoggedInUserEmail();
+    let users = getUsers();
+    
+    users[email].notes[index].content = newText;
+    users[email].notes[index].password = newPass || null;
+    
+    saveUsers(users);
+    renderNotes(); 
+    showToast("Catatan berhasil diperbarui!", 'success');
+}
+
+function startEdit(index) {
+    const card = document.querySelector(`.note-card[data-index="${index}"]`);
+    const noteContentContainer = card.querySelector('.note-content-container');
+    const note = getUsers()[getLoggedInUserEmail()].notes[index];
+    
+    if (card.classList.contains('editing')) return; // Mencegah klik ganda
+
+    card.classList.add('editing');
+    
+    noteContentContainer.innerHTML = `
+        <textarea class="edit-textarea">${note.content}</textarea>
+        <input type="password" class="edit-password" placeholder="Password (Kosongkan jika tidak ada)" value="${note.password || ''}">
+    `;
+    
+    card.querySelector('.note-actions').innerHTML = `
+        <button class="btn-save" data-index="${index}">Simpan</button>
+        <button class="btn-cancel" data-index="${index}">Batal</button>
+    `;
+    
+    const textarea = card.querySelector('.edit-textarea');
+    textarea.focus();
+    
+    card.querySelector('.btn-save').addEventListener('click', (e) => {
+        const newText = textarea.value.trim();
+        const newPass = card.querySelector('.edit-password').value.trim();
+        
+        if (!newText) {
+            showToast("Catatan tidak boleh kosong!", 'error');
+            return;
+        }
+        updateNote(e.target.dataset.index, newText, newPass);
+    });
+
+    card.querySelector('.btn-cancel').addEventListener('click', () => {
+        renderNotes();
+    });
+}
+
+
+// ==== RENDER NOTES (Improved with Lock Icon) ====
+function renderNotes(){
+    D.notesList.innerHTML="";
+    const email = getLoggedInUserEmail();
+    let users = getUsers();
+    if(!users[email]) return;
+    let notes = users[email].notes;
+
+    if(notes.length === 0) { // Empty State
+        D.notesList.innerHTML = `
+            <div style="text-align:center; padding: 2rem; color:#888; border: 2px dashed #ddd; border-radius: 10px;">
+                <h3 style="color: #666; font-weight: 600;">👋 Mulai Catatan Pertama Anda!</h3>
+                <p style="margin-top: 0.5rem; font-weight: 400;">Tulis sesuatu di kolom atas dan tekan "Tambah Catatan".</p>
+            </div>
+        `;
+        return;
+    }
+
+    notes.forEach((noteObj,i)=>{
+        const isLocked = !!noteObj.password;
+        const div = document.createElement("div");
+        div.className="note-card";
+        div.setAttribute('data-index', i); 
+        
+        div.innerHTML=`
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong style="color: ${isLocked ? var(--error-color) : var(--primary-color)}; font-weight: 600;">
+                    ${isLocked ? '🔒 Catatan Terkunci' : 'Catatan Biasa'}
+                </strong>
+            </div>
+            <div class="note-content-container">
+                <p>${linkify(noteObj.content)}</p>
+            </div>
+            <div class="note-actions">
+                <button class="btn-edit" data-index="${i}">Edit</button>
+                <a href="?note=${email}-${i}" target="_blank" style="background:#5a67d8; color:white; padding:0.5rem 0.9rem; border-radius:6px; font-weight:500;">Bagikan (URL)</a>
+                <button class="btn-delete" data-index="${i}">Hapus</button>
+            </div>
+        `;
+        D.notesList.appendChild(div);
+    });
+
+    D.notesList.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", (e) => deleteNote(e.target.dataset.index));
+    });
+    
+    D.notesList.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.addEventListener("click", (e) => startEdit(e.target.dataset.index));
+    });
+}
+
+// Fungsi untuk membuat teks URL menjadi clickable
+function linkify(text){
+    const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+}
+
+// ==== PUBLIC SHARE VIEW (New Logic for Password Protection) ====
+function renderProtectedNote(noteObj, email){
+    const isLocked = !!noteObj.password;
+    
+    if (isLocked) {
+        // Tampilkan Form Input Password
+        D.notesList.innerHTML=`
+            <h2 style="color:var(--primary-color); margin-bottom:1rem; text-align:center;">🔒 Catatan Terkunci</h2>
+            <div class="note-card" style="background: white; border: 1px solid var(--error-color);">
+                <p style="text-align:center;">Catatan ini dilindungi kata sandi oleh ${email.split('@')[0]}.</p>
+                <input type="password" id="share-password" placeholder="Masukkan Kata Sandi Catatan">
+                <button id="unlock-btn" style="margin-top: 0.5rem;">Buka Catatan</button>
+            </div>
+        `;
+        document.getElementById('unlock-btn').addEventListener('click', () => {
+            const enteredPass = document.getElementById('share-password').value.trim();
+            if (enteredPass === noteObj.password) {
+                renderContent(noteObj.content, email);
+            } else {
+                showToast("Kata sandi salah!", 'error');
+            }
+        });
+    } else {
+        // Tampilkan Langsung jika tidak ada password
+        renderContent(noteObj.content, email);
+    }
+}
+
+function renderContent(content, email){
+    D.notesList.innerHTML=`
+        <h2 style="color:var(--primary-color); margin-bottom:1rem; text-align:center;">Catatan Dibagikan</h2>
+        <div class="note-card">
+            <p>${linkify(content)}</p>
+        </div>
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.9rem; color:#888;">
+            <p>Dibagikan oleh pengguna ${email.split('@')[0]}.</p>
+        </div>
+    `;
+    document.querySelector('.container h1').textContent = "Catatan Publik";
+}
+
+window.addEventListener("load",()=>{
+    const logged = getLoggedInUserEmail();
+    const params = new URLSearchParams(window.location.search);
+    const noteParam = params.get("note");
+    
+    if(noteParam){
+        const [email,index] = noteParam.split("-");
+        let users = getUsers();
+        
+        if(users[email] && users[email].notes[index]){
+            D.authContainer.classList.add("hidden");
+            D.noteContainer.classList.remove("hidden");
+            D.userName.textContent = "Publik"; 
+            
+            // Sembunyikan semua kontrol yang tidak diperlukan di mode publik
+            document.querySelector('.container p').style.display = "none";
+            D.noteInput.style.display="none";
+            D.notePasswordInput.style.display="none";
+            D.addNoteBtn.style.display="none";
+            D.logoutBtn.style.display="none";
+
+            // Panggil render protected note
+            renderProtectedNote(users[email].notes[index], email);
+            
+        } else {
+            D.authContainer.classList.remove("hidden");
+        }
+    } 
+    else if(logged) {
+        showNotesPage(logged);
+    } 
+    else {
+        D.authContainer.classList.remove("hidden");
+    }
+});
+</script>
+
+</body>
+</html>
